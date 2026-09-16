@@ -665,6 +665,11 @@ func (cs *checkout) sendToPostProcessor(ctx context.Context, result *pb.OrderRes
 	span := createProducerSpan(ctx, &msg)
 	defer span.End()
 
+	// Identify which order this publish carries. Set before the send so the attribute is
+	// present on every outcome -- success, broker error, and context cancellation alike --
+	// since a failed publish is exactly the case where the order needs to be identifiable.
+	span.SetAttributes(attribute.String("demo.order.id", result.OrderId))
+
 	// Send message and handle response
 	startTime := time.Now()
 	select {
