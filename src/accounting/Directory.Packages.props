@@ -1,6 +1,10 @@
 <Project>
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <!-- Let the PackageVersion items below also constrain transitive dependencies, so a
+             vulnerable transitive package can be pinned without adding a direct
+             PackageReference to something this project does not use in code. -->
+        <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,5 +16,14 @@
         <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
         <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
         <PackageVersion Include="OpenTelemetry.AutoInstrumentation" Version="1.15.0" />
+        <!-- Transitive via OpenTelemetry.AutoInstrumentation, which resolves 1.15.1-beta.1.
+             That version is CVE-2026-81192 / GHSA-v8pv-4842-x354 (high): the host.id
+             detector runs `sh` and `ioreg` by bare name, so on macOS a PATH entry ahead of
+             the system directories can get an arbitrary binary executed in-process. Fixed in
+             1.16.0-beta.2. NuGetAuditMode=all plus TreatWarningsAsErrors in Release (see
+             Directory.Build.props) turns the advisory into a build failure, which is how
+             this surfaced. Pinned to the lowest fixed version to keep the telemetry
+             behaviour under study as close to upstream as possible. -->
+        <PackageVersion Include="OpenTelemetry.Resources.Host" Version="1.16.0-beta.2" />
     </ItemGroup>
 </Project>
